@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Complete Student Profile</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background: #f4f7fa; }
+        .profile-form { max-width: 980px; margin: 40px auto; }
+        .profile-form .card { border: 0; border-radius: 16px; box-shadow: 0 12px 35px rgba(24, 59, 86, .1); }
+        .section-title { color: #183b56; font-weight: 700; }
+    </style>
+</head>
+<body>
+    <main class="container profile-form">
+        <div class="card p-4 p-md-5">
+            <div class="mb-4">
+                <span class="badge text-bg-success mb-2">Account Approved</span>
+                <h1 class="section-title h3">Complete Your Student Profile</h1>
+                <p class="text-muted mb-0">Fill in all details and upload your photo and college ID before entering the dashboard.</p>
+            </div>
+            {% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
+            <form method="POST" enctype="multipart/form-data" class="row g-3">
+                <div class="col-12"><h2 class="h5 section-title border-bottom pb-2">Personal Details</h2></div>
+                <div class="col-md-6"><label class="form-label">Full Name</label><input class="form-control" name="name" value="{{ student.name or '' }}" required></div>
+                <div class="col-md-6"><label class="form-label">Phone</label><input class="form-control" name="phone" value="{{ student.phone or '' }}" required></div>
+                <div class="col-md-6"><label class="form-label">College</label><input class="form-control" name="college" value="{{ student.college or '' }}" required></div>
+                <div class="col-md-6"><label class="form-label">Course</label><input class="form-control" name="course" value="{{ student.course or '' }}" required></div>
+                <div class="col-md-6"><label class="form-label">Department</label><input class="form-control" name="department" value="{{ student.department or '' }}" required></div>
+                <div class="col-md-6"><label class="form-label">Year / Semester</label><input class="form-control" name="year_semester" value="{{ student.year_semester or '' }}" required></div>
+                <div class="col-md-6"><label class="form-label">Aadhaar</label><input class="form-control" name="aadhaar" value="{{ student.aadhaar or '' }}" required></div>
+                <div class="col-md-6"><label class="form-label">Blood Group</label><input class="form-control" name="blood_group" value="{{ student.blood_group or '' }}" placeholder="For example: B+" required></div>
+
+                <div class="col-12 mt-4"><h2 class="h5 section-title border-bottom pb-2">Guardian and Emergency Details</h2></div>
+                <div class="col-md-6"><label class="form-label">Guardian Name</label><input class="form-control" name="guardian_name" value="{{ student.guardian_name or '' }}" required></div>
+                <div class="col-md-6"><label class="form-label">Guardian Phone</label><input class="form-control" name="guardian_phone" value="{{ student.guardian_phone or '' }}" required></div>
+                <div class="col-md-6"><label class="form-label">Guardian Phone 2</label><input class="form-control" name="guardian_phone_2" value="{{ student.guardian_phone_2 or '' }}" required></div>
+                <div class="col-md-6"><label class="form-label">Father's Name</label><input class="form-control" name="father_name" value="{{ student.father_name or '' }}" required></div>
+                <div class="col-md-6"><label class="form-label">Mother's Name</label><input class="form-control" name="mother_name" value="{{ student.mother_name or '' }}" required></div>
+                <div class="col-12"><label class="form-label">Home Address</label><textarea class="form-control" name="home_address" rows="2" required>{{ student.home_address or '' }}</textarea></div>
+                <div class="col-md-6"><label class="form-label">Village / City</label><input class="form-control" name="address_city" value="{{ student.address_city or '' }}" required></div>
+                <div class="col-md-6"><label class="form-label">District</label><input class="form-control" name="address_district" value="{{ student.address_district or '' }}" required></div>
+                <div class="col-md-6"><label class="form-label">State</label><input class="form-control" name="address_state" value="{{ student.address_state or '' }}" required></div>
+                <div class="col-md-6"><label class="form-label">Pincode</label><input class="form-control" name="address_pincode" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" value="{{ student.address_pincode or '' }}" required></div>
+                <div class="col-md-6"><label class="form-label">Country</label><input class="form-control" name="address_country" value="{{ student.address_country or 'India' }}" required></div>
+                <div class="col-md-6"><label class="form-label">Emergency Contact</label><input class="form-control" name="emergency_contact" value="{{ student.emergency_contact or '' }}" required></div>
+
+                <div class="col-12 mt-4"><h2 class="h5 section-title border-bottom pb-2">Required Documents</h2></div>
+                <div class="col-md-6"><label class="form-label">Student Profile Photo</label>{% if student.photo_url %}<div class="alert alert-success py-2 small mb-0">Profile photo already saved permanently.</div>{% else %}<input class="form-control" type="file" name="photo" accept="image/*" required>{% endif %}</div>
+                <div class="col-md-6"><label class="form-label">College ID Photo or PDF <span class="text-muted">(Optional)</span></label><input class="form-control" type="file" name="college_id" accept="image/*,.pdf"><div class="form-text">You can upload your college ID later from your dashboard.</div></div>
+
+                <div class="col-12 mt-4 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <span class="text-muted small">Hostel: {{ student.hostel or '-' }} | Room: {{ student.room or 'Pending' }}</span>
+                    <button class="btn btn-primary px-4" type="submit">Save Details and Open Dashboard</button>
+                </div>
+            </form>
+        </div>
+    </main>
+</body>
+</html>

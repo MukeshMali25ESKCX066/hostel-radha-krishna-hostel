@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        :root { --student-ink: #183b56; --student-bg: #f4f7fa; }
+        body { background: var(--student-bg); }
+        .student-sidebar { position: fixed; inset: 0 auto 0 0; z-index: 1030; width: 250px; max-height: 100vh; overflow-y: auto; padding: 28px 16px; color: #fff; background: var(--student-ink); box-shadow: 8px 0 24px rgba(24, 59, 86, .12); scrollbar-width: thin; scrollbar-color: #6fa8c5 transparent; }
+        .student-sidebar::-webkit-scrollbar { width: 7px; }
+        .student-sidebar::-webkit-scrollbar-thumb { border-radius: 8px; background: #6fa8c5; }
+        .student-brand { padding: 0 12px 24px; border-bottom: 1px solid rgba(255,255,255,.16); }
+        .student-brand strong { display: block; font-size: 1.1rem; }
+        .student-brand small { color: #b8cbd8; }
+        .student-nav { margin-top: 22px; }
+        .student-nav-label { padding: 14px 12px 6px; color: #9eb5c5; font-size: .68rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+        .student-nav a { display: flex; align-items: center; justify-content: flex-start; gap: 10px; margin: 3px 0; padding: 11px 12px; color: #e8f1f5; border-radius: 8px; font-size: .92rem; text-align: left; text-decoration: none; }
+        .student-nav a:hover, .student-nav a.active { color: #fff; background: #28617f; }
+        .student-main { margin-left: 250px; }
+        .student-section { text-align: left; }
+        .attendance-day { border-radius: 8px; }
+        .attendance-present { background: #d1e7dd; border-color: #75b798 !important; color: #0f5132; }
+        .attendance-absent { background: #f8d7da; border-color: #ea868f !important; color: #842029; }
+        .attendance-late { background: #fff3cd; border-color: #ffda6a !important; color: #664d03; }
+        @media (max-width: 900px) {
+            .student-sidebar { position: sticky; width: 100%; height: auto; padding: 12px 14px; }
+            .student-brand { display: inline-block; padding: 0; border: 0; }
+            .student-brand small, .student-nav-label { display: none; }
+            .student-nav { display: flex; gap: 6px; margin: 10px 0 0; overflow-x: auto; }
+            .student-nav a { white-space: nowrap; }
+            .student-main { margin-left: 0; }
+            .student-main > .container { padding-top: 18px !important; }
+        }
+    </style>
+</head>
+<body>
+    <aside class="student-sidebar" aria-label="Student navigation">
+        <div class="student-brand"><strong>Radha Krishan Hostel</strong><small>Student Portal</small></div>
+        <nav class="student-nav">
+            <div class="student-nav-label">My Account</div>
+            <a class="active" href="#profile">👤 My Profile</a>
+            <a href="#hostel-id">🪪 Hostel ID Card</a>
+            <a href="#college-id">🎓 College ID Card</a>
+            <div class="student-nav-label">Services</div>
+            <a href="#attendance">📅 Attendance</a>
+            <a href="#fees">💳 Fee Receipts</a>
+            <a href="#payments">💰 Make Payment</a>
+            <a href="#complaint-form">📝 Raise Complaint</a>
+            <a href="#complaint-tracker">💬 Complaint Tracker</a>
+            <a href="#laundry">🧺 Laundry Token</a>
+            <a href="#leave">🏖️ Holiday / Leave</a>
+            <div class="student-nav-label">Information</div>
+            <a href="#notifications">🔔 Notifications</a>
+            <a href="#hostel-info">🏠 Hostel Information</a>
+            <a href="/logout">↪ Logout</a>
+        </nav>
+    </aside>
+    <div class="student-main">
+    <div class="container py-4">
+        <div class="hero-card mb-4">
+            <div>
+                <h2 class="mb-1">Hostel Management System</h2>
+                <p class="text-muted mb-0">A modern student portal for profile, ID cards, fees, complaints, laundry and attendance.</p>
+            </div>
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <span class="badge bg-primary-subtle text-primary">{{ student.name if student else 'Student' }}</span>
+                <form action="/withdraw-application" method="post" onsubmit="return confirm('Are you sure you want to withdraw your hostel application?');">
+                    <button class="btn btn-outline-warning btn-sm" type="submit">Withdraw Application</button>
+                </form>
+                <a href="/logout" class="btn btn-outline-danger btn-sm">Logout</a>
+            </div>
+        </div>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endwith %}
+
+        <div class="row g-4">
+            <div class="col-lg-8">
+                <div id="profile" class="student-section card shadow-sm mb-4">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div>
+                                <h4 class="mb-1">My Profile</h4>
+                                <p class="text-muted mb-0">Your hostel details and profile information</p>
+                            </div>
+                            <button class="btn btn-outline-primary btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#editProfileForm">Edit Profile</button>
+                        </div>
+                        <div class="collapse mb-3" id="editProfileForm">
+                            <form action="/edit-profile" method="post" class="row g-2">
+                                <div class="col-md-6"><input class="form-control form-control-sm" name="name" placeholder="Full Name" value="{{ student.name if student else '' }}"></div>
+                                <div class="col-md-6"><input class="form-control form-control-sm" name="phone" placeholder="Phone" value="{{ student.phone if student else '' }}"></div>
+                                <div class="col-md-6"><input class="form-control form-control-sm" name="hostel" placeholder="Hostel" value="{{ student.hostel if student else '' }}"></div>
+                                <div class="col-md-6"><input class="form-control form-control-sm" name="block" placeholder="Hostel Floor" value="{{ student.block if student else '' }}"></div>
+                                <div class="col-md-6"><input class="form-control form-control-sm" name="room" placeholder="Room" value="{{ student.room if student else '' }}"></div>
+                                <div class="col-md-6"><input class="form-control form-control-sm" name="college" placeholder="College" value="{{ student.college if student else '' }}"></div>
+                                <div class="col-md-6"><input class="form-control form-control-sm" name="course" placeholder="Course" value="{{ student.course if student else '' }}"></div>
+                                <div class="col-md-6"><input class="form-control form-control-sm" name="department" placeholder="Department" value="{{ student.department if student else '' }}"></div>
+                                <div class="col-md-6"><input class="form-control form-control-sm" name="year_semester" placeholder="Year/Semester" value="{{ student.year_semester if student else '' }}"></div>
+                                <div class="col-md-6"><input class="form-control form-control-sm" name="guardian_name" placeholder="Guardian Name" value="{{ student.guardian_name if student else '' }}"></div>
+                                <div class="col-md-6"><input class="form-control form-control-sm" name="guardian_phone" placeholder="Guardian Phone" value="{{ student.guardian_phone if student else '' }}"></div>
+                                <div class="col-md-6"><input class="form-control form-control-sm" name="guardian_phone_2" placeholder="Guardian Phone 2" value="{{ student.guardian_phone_2 if student else '' }}"></div>
+                                <div class="col-md-6"><input class="form-control form-control-sm" name="father_name" placeholder="Father's Name" value="{{ student.father_name if student else '' }}"></div>
+                                <div class="col-md-6"><input class="form-control form-control-sm" name="mother_name" placeholder="Mother's Name" value="{{ student.mother_name if student else '' }}"></div>
+                                <div class="col-12"><textarea class="form-control form-control-sm" name="home_address" rows="2" placeholder="Home Address">{{ student.home_address if student else '' }}</textarea></div>
+                                <div class="col-md-6"><input class="form-control form-control-sm" name="address_city" placeholder="Village / City" value="{{ student.address_city if student else '' }}"></div>
+                                <div class="col-md-6"><input class="form-control form-control-sm" name="address_district" placeholder="District" value="{{ student.address_district if student else '' }}"></div>
+                                <div class="col-md-6"><input class="form-control form-control-sm" name="address_state" placeholder="State" value="{{ student.address_state if student else '' }}"></div>
+                                <div class="col-md-6"><input class="form-control form-control-sm" name="address_pincode" placeholder="Pincode" inputmode="numeric" maxlength="6" value="{{ student.address_pincode if student else '' }}"></div>
+                                <div class="col-md-6"><input class="form-control form-control-sm" name="address_country" placeholder="Country" value="{{ student.address_country if student else 'India' }}"></div>
+                                <div class="col-md-6"><input class="form-control form-control-sm" name="emergency_contact" placeholder="Emergency Contact" value="{{ student.emergency_contact if student else '' }}"></div>
+                                <div class="col-md-6"><input class="form-control form-control-sm" name="aadhaar" placeholder="Aadhaar" value="{{ student.aadhaar if student else '' }}"></div>
+                                <div class="col-md-6"><input class="form-control form-control-sm" name="bed_number" placeholder="Bed Number" value="{{ student.bed_number if student else '' }}"></div>
+                                <div class="col-md-6"><input class="form-control form-control-sm" name="blood_group" placeholder="Blood Group" value="{{ student.blood_group if student else '' }}"></div>
+                                <div class="col-12"><button class="btn btn-primary btn-sm">Save Changes</button></div>
+                            </form>
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <div class="profile-avatar">
+                                    {% if student and student.photo_url %}
+                                        <img src="{{ student.photo_url }}" alt="Profile" class="img-fluid rounded-circle" style="width:100%;height:100%;object-fit:cover;">
+                                    {% else %}
+                                        {{ (student.name if student else 'S')[0]|upper }}
+                                    {% endif %}
+                                </div>
+                                <label class="form-label small fw-semibold mt-3 mb-1">Student Photo</label>
+                                {% if student and student.photo_url %}
+                                    <div class="alert alert-success py-2 small">Profile photo saved permanently. Students cannot change it.</div>
+                                {% else %}
+                                    <form action="/upload-profile-photo" method="post" enctype="multipart/form-data">
+                                        <input class="form-control form-control-sm" type="file" name="photo" accept="image/*" required>
+                                        <button class="btn btn-outline-primary btn-sm mt-2">Upload Photo</button>
+                                    </form>
+                                {% endif %}
+                                <label class="form-label small fw-semibold mt-3 mb-1">College ID Photo</label>
+                                <form action="/upload-college-id" method="post" enctype="multipart/form-data">
+                                    <input class="form-control form-control-sm" type="file" name="college_id" accept="image/*,.pdf" required>
+                                    <button class="btn btn-outline-secondary btn-sm mt-2">Upload College ID</button>
+                                </form>
+                                {% if dashboard_context.college_id_card.college_id_url %}
+                                    <a class="btn btn-link btn-sm px-0 mt-2" href="{{ dashboard_context.college_id_card.college_id_url }}" target="_blank" rel="noreferrer">View uploaded College ID</a>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-8">
+                                <div class="row g-3">
+                                    <div class="col-sm-6"><strong>Full Name:</strong><br>{{ dashboard_context.profile.full_name }}</div>
+                                    <div class="col-sm-6"><strong>Student ID:</strong><br>{{ dashboard_context.profile.student_id }}</div>
+                                    <div class="col-sm-6"><strong>Course:</strong><br>{{ dashboard_context.profile.course }}</div>
+                                    <div class="col-sm-6"><strong>Department:</strong><br>{{ dashboard_context.profile.department }}</div>
+                                    <div class="col-sm-6"><strong>Year/Semester:</strong><br>{{ dashboard_context.profile.year_semester }}</div>
+                                    <div class="col-sm-6"><strong>Mobile:</strong><br>{{ dashboard_context.profile.mobile }}</div>
+                                    <div class="col-sm-6"><strong>Email:</strong><br>{{ dashboard_context.profile.email }}</div>
+                                    <div class="col-sm-6"><strong>Hostel:</strong><br>{{ dashboard_context.profile.hostel_name }}</div>
+                                    <div class="col-sm-6"><strong>Room Number:</strong><br>{{ dashboard_context.profile.room_number }}</div>
+                                    <div class="col-sm-6"><strong>Bed Number:</strong><br>{{ dashboard_context.profile.bed_number }}</div>
+                                    <div class="col-sm-6"><strong>Guardian Phone 2:</strong><br>{{ dashboard_context.profile.guardian_phone_2 }}</div>
+                                    <div class="col-sm-6"><strong>Father's Name:</strong><br>{{ dashboard_context.profile.father_name }}</div>
+                                    <div class="col-sm-6"><strong>Mother's Name:</strong><br>{{ dashboard_context.profile.mother_name }}</div>
+                                    <div class="col-12"><strong>Home Address:</strong><br>{{ dashboard_context.profile.home_address }}</div>
+                                    <div class="col-sm-6"><strong>Village / City:</strong><br>{{ dashboard_context.profile.address_city }}</div>
+                                    <div class="col-sm-6"><strong>District:</strong><br>{{ dashboard_context.profile.address_district }}</div>
+                                    <div class="col-sm-6"><strong>State:</strong><br>{{ dashboard_context.profile.address_state }}</div>
+                                    <div class="col-sm-6"><strong>Pincode:</strong><br>{{ dashboard_context.profile.address_pincode }}</div>
+                                    <div class="col-sm-6"><strong>Country:</strong><br>{{ dashboard_context.profile.address_country }}</div>
+                                    <div class="col-sm-6"><strong>Admission Date:</strong><br>{{ dashboard_context.profile.admission_date }}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="hostel-id" class="student-section card shadow-sm mb-4">
+                    <div class="card-body">
+                        <h4 class="mb-3">Digital Hostel ID Card</h4>
+                        <div class="id-card p-3">
+                            <h5>ABC UNIVERSITY HOSTEL</h5>
+                            <p class="mb-2">HOSTEL ID CARD</p>
+                            <div class="row g-3 align-items-center">
+                                <div class="col-md-4">
+                                    <div class="profile-avatar large">
+                                        {% if dashboard_context.profile_photo and dashboard_context.profile_photo != '/uploads/default-avatar.png' %}
+                                            <img src="{{ dashboard_context.profile_photo }}" alt="Student profile photo" class="img-fluid rounded-circle" style="width:100%;height:100%;object-fit:cover;">
+                                        {% else %}
+                                            {{ (student.name if student else 'S')[0]|upper }}
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-8">
+                                    <p class="mb-1"><strong>Name:</strong> {{ dashboard_context.hostel_id_card.name }}</p>
+                                    <p class="mb-1"><strong>Student ID:</strong> {{ dashboard_context.profile.student_id }}</p>
+                                    <p class="mb-1"><strong>Hostel ID:</strong> {{ dashboard_context.hostel_id_card.hostel_id }}</p>
+                                    <p class="mb-1"><strong>Hostel:</strong> {{ dashboard_context.hostel_id_card.hostel }}</p>
+                                    <p class="mb-1"><strong>Room No.:</strong> {{ dashboard_context.hostel_id_card.room_no }}</p>
+                                    <p class="mb-1"><strong>Blood Group:</strong> {{ dashboard_context.hostel_id_card.blood_group }}</p>
+                                    <p class="mb-1"><strong>Mobile:</strong> {{ dashboard_context.hostel_id_card.mobile }}</p>
+                                </div>
+                            </div>
+                            <p class="mt-3 mb-0"><strong>Valid Till:</strong> {{ dashboard_context.hostel_id_card.valid_till }}</p>
+                        </div>
+                        <div class="mt-3">
+                            <a href="/download-fee-receipt" class="btn btn-success btn-sm">Download Hostel ID Card</a>
+                            <a href="/download-college-id-card" class="btn btn-outline-secondary btn-sm">Download College ID Card</a>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="college-id" class="student-section card shadow-sm mb-4">
+                    <div class="card-body">
+                        <h4 class="mb-3">College ID Card</h4>
+                        <p><strong>College:</strong> {{ dashboard_context.college_id_card.college }}</p>
+                        <p><strong>Course:</strong> {{ dashboard_context.college_id_card.course }}</p>
+                        <p><strong>Department:</strong> {{ dashboard_context.college_id_card.department }}</p>
+                        <div class="mt-3">
+                            <a href="/download-college-id-card" class="btn btn-primary btn-sm">Download College ID Card</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div id="leave" class="student-section card shadow-sm mb-4">
+                    <div class="card-body">
+                        <h4 class="mb-3">Holiday / Leave Request</h4>
+                        <form action="/student-leave-request" method="post" class="row g-2">
+                            <div class="col-12"><label class="form-label">Leave Type</label><select class="form-select" name="leave_type"><option value="holiday">Holiday</option><option value="home_leave">Home Leave</option><option value="emergency">Emergency Leave</option></select></div>
+                            <div class="col-md-6"><label class="form-label">From</label><input class="form-control" type="date" name="start_date" required></div>
+                            <div class="col-md-6"><label class="form-label">To</label><input class="form-control" type="date" name="end_date" required></div>
+                            <div class="col-12"><label class="form-label">Reason</label><textarea class="form-control" name="reason" rows="2" required></textarea></div>
+                            <div class="col-12"><label class="form-label">Destination / Address</label><input class="form-control" name="destination" required></div>
+                            <div class="col-12"><label class="form-label">Emergency Contact During Leave</label><input class="form-control" name="emergency_contact" required></div>
+                            <div class="col-12"><button class="btn btn-primary btn-sm" type="submit">Send for Admin Approval</button></div>
+                        </form>
+                        <hr>
+                        <h6>My Leave Requests</h6>
+                        {% for leave in dashboard_context.leave_requests %}
+                            <div class="border rounded p-2 mb-2"><strong>{{ leave.leave_type|replace('_', ' ')|title }}</strong><br><small>{{ leave.start_date }} to {{ leave.end_date }}</small><br><span class="badge {% if leave.status == 'approved' %}bg-success{% elif leave.status == 'rejected' %}bg-danger{% else %}bg-secondary{% endif %}">{{ leave.status|title }}</span>{% if leave.status == 'approved' %}<div class="alert alert-success mt-2 mb-0 py-2"><strong>Leave Gate Approved</strong><br><small>Pass No: LV-{{ '%05d'|format(leave.id) }}<br>Show this approval at the hostel gate.</small></div>{% endif %}{% if leave.admin_note %}<div class="small mt-1">Admin note: {{ leave.admin_note }}</div>{% endif %}</div>
+                        {% else %}<p class="text-muted small mb-0">No leave requests submitted.</p>{% endfor %}
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div id="attendance" class="student-section card shadow-sm mb-4">
+                    <div class="card-body">
+                        <h4 class="mb-3">Attendance</h4>
+                        <form action="/mark-attendance" method="post">
+                            <button class="btn btn-success btn-sm">Mark Today's Attendance</button>
+                        </form>
+                        <div class="mt-3">
+                            <strong>Attendance Calendar</strong>
+                            <div class="row g-2 mt-2">
+                                {% for day in dashboard_context.attendance_calendar %}
+                                <div class="col-4">
+                                    <div class="attendance-day border rounded p-2 text-center small {% if day.status|lower == 'present' %}attendance-present{% elif day.status|lower == 'absent' %}attendance-absent{% elif day.status|lower == 'late' %}attendance-late{% endif %}">
+                                        <div class="fw-bold">{{ day.day }}</div>
+                                        <div>{{ day.status }}</div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="fees" class="student-section card shadow-sm mb-4">
+                    <div class="card-body">
+                        <h4 class="mb-3">Hostel Fee Receipts</h4>
+                        <div class="list-group">
+                            {% for receipt in dashboard_context.fee_receipts %}
+                            <div class="list-group-item">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <strong>Receipt {{ receipt.receipt_no }}</strong>
+                                    <span class="badge bg-success">{{ receipt.status }}</span>
+                                </div>
+                                <hr class="my-2">
+                                <div class="small row g-2">
+                                    <div class="col-6"><strong>Student:</strong><br>{{ receipt.student_name }}</div>
+                                    <div class="col-6"><strong>Student ID:</strong><br>{{ receipt.student_id }}</div>
+                                    <div class="col-12"><strong>Email:</strong><br>{{ receipt.email }}</div>
+                                    <div class="col-6"><strong>Mobile:</strong><br>{{ receipt.mobile }}</div>
+                                    <div class="col-6"><strong>Hostel:</strong><br>{{ receipt.hostel }}</div>
+                                    <div class="col-6"><strong>Floor:</strong><br>{{ receipt.block }}</div>
+                                    <div class="col-6"><strong>Room:</strong><br>{{ receipt.room }}</div>
+                                    <div class="col-6"><strong>Total Fee:</strong><br>{{ receipt.total_fee }}</div>
+                                    <div class="col-6"><strong>Paid Amount:</strong><br>{{ receipt.paid_amount }}</div>
+                                    <div class="col-6"><strong>Due Amount:</strong><br>{{ receipt.due_amount }}</div>
+                                    <div class="col-6"><strong>Generated:</strong><br>{{ receipt.date }}</div>
+                                </div>
+                                <a href="/download-fee-receipt" class="btn btn-outline-secondary btn-sm mt-2">Download PDF</a>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <div id="payments" class="student-section card shadow-sm mb-4">
+                    <div class="card-body">
+                        <h4 class="mb-3">Make Fee Payment</h4>
+                        <p class="text-muted small">Scan this QR code to pay hostel fees, then submit your transaction details for admin verification.</p>
+                        <div class="text-center mb-3"><img src="/payment-qr" alt="Hostel payment QR code" class="img-fluid border rounded p-2" style="max-width:220px;"></div>
+                        <form action="/student-payment-submit" method="post" enctype="multipart/form-data" class="row g-2">
+                            <div class="col-6"><label class="form-label">Amount</label><input class="form-control" type="number" name="amount" min="1" step="0.01" required></div>
+                            <div class="col-6"><label class="form-label">Payment Date</label><input class="form-control" type="date" name="payment_date" required></div>
+                            <div class="col-12"><label class="form-label">UTR / Transaction ID</label><input class="form-control" name="utr" maxlength="100" required></div>
+                            <div class="col-12"><label class="form-label">Payment Method</label><select class="form-select" name="payment_method"><option>UPI</option><option>Bank Transfer</option><option>Cash Deposit</option></select></div>
+                            <div class="col-12"><label class="form-label">Payment Screenshot</label><input class="form-control" type="file" name="screenshot" accept="image/*" required></div>
+                            <div class="col-12"><label class="form-label">Additional Details</label><textarea class="form-control" name="notes" rows="2" placeholder="Optional note"></textarea></div>
+                            <div class="col-12"><button class="btn btn-primary w-100" type="submit">Submit Payment for Verification</button></div>
+                        </form>
+                        <hr>
+                        <h6>My Payment Submissions</h6>
+                        {% for payment in dashboard_context.payment_submissions %}
+                            <div class="border rounded p-2 mb-2 small"><div class="d-flex justify-content-between"><strong>Rs. {{ '%.2f'|format(payment.amount) }}</strong><span class="badge {% if payment.status == 'approved' %}bg-success{% elif payment.status == 'rejected' %}bg-danger{% else %}bg-warning text-dark{% endif %}">{{ payment.status|title }}</span></div><div>UTR: {{ payment.utr }} | {{ payment.payment_date }}</div>{% if payment.admin_note %}<div class="text-muted">Admin note: {{ payment.admin_note }}</div>{% endif %}</div>
+                        {% else %}<p class="text-muted small mb-0">No payment submissions yet.</p>{% endfor %}
+                    </div>
+                </div>
+
+                <div id="complaint-form" class="student-section card shadow-sm mb-4">
+                    <div class="card-body">
+                        <h4 class="mb-3">Raise Complaint</h4>
+                        <form action="/student-complaint" method="post">
+                            <div class="mb-3">
+                                <label class="form-label">Category</label>
+                                <select class="form-select" name="category">
+                                    {% for category in dashboard_context.complaint_categories %}
+                                    <option>{{ category }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Subject</label>
+                                <input class="form-control" type="text" name="subject" placeholder="Enter subject" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Description</label>
+                                <textarea class="form-control" rows="3" name="description" placeholder="Describe your issue" required></textarea>
+                            </div>
+                            <button class="btn btn-primary">Submit</button>
+                        </form>
+                    </div>
+                </div>
+
+                <div id="complaint-tracker" class="student-section card shadow-sm mb-4">
+                    <div class="card-body">
+                        <h4 class="mb-3">Complaint Tracker</h4>
+                        <div class="list-group">
+                            {% for complaint in dashboard_context.complaints %}
+                            <div class="list-group-item">
+                                <div class="d-flex justify-content-between">
+                                    <strong>{{ complaint.category }}</strong>
+                                    <span class="badge bg-warning text-dark">{{ complaint.status }}</span>
+                                </div>
+                                <p class="mb-1">{{ complaint.subject }}</p>
+                                <small class="text-muted">{{ complaint.date }}</small>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4 mt-1">
+            <div class="col-lg-4">
+                <div id="laundry" class="student-section card shadow-sm">
+                    <div class="card-body">
+                        <h4 class="mb-3">Laundry Token System</h4>
+                        <div class="laundry-token p-3">
+                            <p class="mb-1"><strong>Token No:</strong> {{ dashboard_context.laundry_token.token_no }}</p>
+                            <p class="mb-1"><strong>Verification Code:</strong> {{ dashboard_context.laundry_token.verification_code or 'Not generated' }}</p>
+                            {% if dashboard_context.laundry_token.out_code %}<p class="mb-1"><strong>Out Code:</strong> {{ dashboard_context.laundry_token.out_code }}</p>{% endif %}
+                            {% if dashboard_context.laundry_token.bag_in_at %}<p class="mb-1"><strong>Bag In:</strong> {{ dashboard_context.laundry_token.bag_in_at }}</p>{% endif %}
+                            {% if dashboard_context.laundry_token.bag_out_at %}<p class="mb-1"><strong>Bag Out:</strong> {{ dashboard_context.laundry_token.bag_out_at }}</p>{% endif %}
+                            <p class="mb-1"><strong>Date:</strong> {{ dashboard_context.laundry_token.date }}</p>
+                            <p class="mb-1"><strong>Time:</strong> {{ dashboard_context.laundry_token.time }}</p>
+                            <p class="mb-1"><strong>Status:</strong> {{ dashboard_context.laundry_token.status }}</p>
+                            <p class="mb-1"><strong>Valid Till:</strong> {{ dashboard_context.laundry_token.valid_until }}</p>
+                        </div>
+                        <p class="text-muted small mt-3 mb-0">Token har week automatically generate hota hai.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div id="notifications" class="student-section card shadow-sm">
+                    <div class="card-body">
+                        <h4 class="mb-3">Notifications</h4>
+                        <ul class="list-unstyled mb-0">
+                            {% for notification in dashboard_context.notifications %}
+                            <li class="border rounded p-2 mb-2"><strong>{{ notification.title if notification.title is defined else 'Hostel Update' }}</strong><br>{{ notification.message if notification.message is defined else notification }}{% if notification.image_url %}<br><img src="{{ notification.image_url }}" alt="Notification image" class="img-fluid rounded mt-2" style="max-height:180px;object-fit:cover;">{% endif %}<br><small class="text-muted">{{ notification.created_at if notification.created_at is defined else '' }}</small></li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div id="hostel-info" class="student-section card shadow-sm">
+                    <div class="card-body">
+                        <h4 class="mb-3">Hostel Information</h4>
+                        <p class="mb-1"><strong>Hostel Name:</strong> {{ dashboard_context.hostel_info.hostel_name }}</p>
+                        <p class="mb-1"><strong>Room Number:</strong> {{ dashboard_context.hostel_info.room_number }}</p>
+                        <p class="mb-1"><strong>Floor:</strong> {{ dashboard_context.hostel_info.floor }}</p>
+                        <p class="mb-1"><strong>Warden Name:</strong> {{ dashboard_context.hostel_info.warden_name }}</p>
+                        <p class="mb-1"><strong>Warden Contact:</strong> {{ dashboard_context.hostel_info.warden_contact }}</p>
+                        <p class="mb-1"><strong>Emergency Contact:</strong> {{ dashboard_context.hostel_info.emergency_contact }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-4">
+            <a href="/" class="btn btn-primary">Back to Home</a>
+        </div>
+    </div>
+    </div>
+    <script>
+        (() => {
+            const sections = [...document.querySelectorAll('.student-section')];
+            const menuLinks = [...document.querySelectorAll('.student-nav a[href^="#"]')];
+
+            const showSection = (id) => {
+                sections.forEach((section) => section.classList.toggle('d-none', section.id !== id));
+                menuLinks.forEach((link) => link.classList.toggle('active', link.getAttribute('href') === `#${id}`));
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            };
+
+            menuLinks.forEach((link) => {
+                link.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    showSection(link.getAttribute('href').slice(1));
+                });
+            });
+
+            showSection('profile');
+        })();
+    </script>
+</body>
+</html>

@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        :root { --admin-ink: #183b56; --admin-muted: #6b7c8f; --admin-bg: #f4f7fa; }
+        body { background: var(--admin-bg); }
+        .admin-sidebar { position: fixed; inset: 0 auto 0 0; z-index: 1030; width: 250px; max-height: 100vh; overflow-y: auto; padding: 28px 16px; color: #fff; background: var(--admin-ink); box-shadow: 8px 0 24px rgba(24, 59, 86, .12); scrollbar-width: thin; scrollbar-color: #6fa8c5 transparent; }
+        .admin-sidebar::-webkit-scrollbar { width: 7px; }
+        .admin-sidebar::-webkit-scrollbar-thumb { border-radius: 8px; background: #6fa8c5; }
+        .admin-sidebar-toggle { position: fixed; top: 16px; left: 266px; z-index: 1040; width: 40px; height: 40px; border: 0; border-radius: 8px; color: #fff; background: #28617f; cursor: pointer; transition: left .25s ease; }
+        .admin-sidebar.collapsed { transform: translateX(-100%); }
+        .admin-sidebar, .admin-main { transition: margin-left .25s ease, transform .25s ease; }
+        body.sidebar-collapsed .admin-main { margin-left: 0; }
+        body.sidebar-collapsed .admin-sidebar-toggle { left: 16px; }
+        .admin-brand { padding: 0 12px 24px; border-bottom: 1px solid rgba(255,255,255,.16); }
+        .admin-brand strong { display: block; font-size: 1.1rem; }
+        .admin-brand small { color: #b8cbd8; }
+        .admin-nav { margin-top: 22px; }
+        .admin-nav-label { padding: 14px 12px 6px; color: #9eb5c5; font-size: .68rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+        .admin-nav a { display: flex; align-items: center; justify-content: flex-start; gap: 10px; margin: 3px 0; padding: 11px 12px; color: #e8f1f5; border-radius: 8px; font-size: .92rem; text-align: left; text-decoration: none; }
+        .admin-nav a:hover, .admin-nav a.active { color: #fff; background: #28617f; }
+        .admin-main { margin-left: 250px; }
+        .admin-section { text-align: left; }
+        .admin-section.section-visible { animation: adminSectionSlide .24s ease-out; }
+        @keyframes adminSectionSlide { from { opacity: 0; transform: translateX(14px); } to { opacity: 1; transform: translateX(0); } }
+        #security { border: 0; overflow: hidden; background: linear-gradient(135deg, #ffffff 0%, #eef7f5 100%); }
+        #security h4 { color: #183b56; font-weight: 700; }
+        .security-qr { display: inline-flex; padding: 14px; border: 1px solid #d7e5e1; border-radius: 12px; background: #fff; box-shadow: 0 8px 22px rgba(24, 59, 86, .08); }
+        .security-qr img { display: block; width: 220px; height: 220px; }
+        .security-copy { color: #526b78; }
+        .admin-topbar { display: none; }
+        @media (max-width: 900px) {
+            .admin-sidebar { position: sticky; width: 100%; height: auto; padding: 12px 14px; }
+            .admin-sidebar-toggle { top: 10px; left: auto; right: 14px; }
+            .admin-sidebar.collapsed { transform: translateY(-100%); position: fixed; }
+            body.sidebar-collapsed .admin-sidebar-toggle { left: auto; right: 14px; }
+            .admin-brand { display: inline-block; padding: 0; border: 0; }
+            .admin-brand small, .admin-nav-label { display: none; }
+            .admin-nav { display: flex; gap: 6px; margin: 10px 0 0; overflow-x: auto; }
+            .admin-nav a { white-space: nowrap; }
+            .admin-main { margin-left: 0; }
+            .admin-main > .container { margin-top: 18px !important; }
+        }
+    </style>
+</head>
+<body>
+    <button class="admin-sidebar-toggle" type="button" aria-label="Toggle category sidebar" aria-expanded="true">☰</button>
+    <aside class="admin-sidebar" aria-label="Admin navigation">
+        <div class="admin-brand"><strong>Radha Krishan Hostel</strong><small>Administration Panel</small></div>
+        <nav class="admin-nav">
+            <div class="admin-nav-label">Overview</div>
+            <a class="active" href="#overview">📊 Dashboard</a>
+            <a href="#security">🔐 Security</a>
+            <a href="#payment-verification">💳 Payment Verification</a>
+            <div class="admin-nav-label">Hostel Operations</div>
+            <a href="#rooms">🛏️ Manage Rooms</a>
+            <a href="#occupancy">👥 Room Occupancy</a>
+            <div class="admin-nav-label">Student Management</div>
+            <a href="#all-students">🎓 All Students</a>
+            <a href="#student-details">📋 Full Student Details</a>
+            <div class="admin-nav-label">Requests</div>
+            <a href="#complaints">💬 Complaints</a>
+            <a href="#laundry">🧺 Laundry Requests</a>
+            <a href="#leave-requests">🏖️ Holiday / Leave Requests</a>
+            <a href="#attendance-records">📅 Attendance Records</a>
+            <a href="#admin-access-logs">🖥️ Admin Access Logs</a>
+            <a href="#notifications">🔔 Create Notification</a>
+            <div class="admin-nav-label">Account</div>
+            <a href="/">🏠 Home</a>
+            <a href="/logout">↪ Logout</a>
+        </nav>
+    </aside>
+    <div class="admin-main">
+    <div class="container mt-5">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2>Admin Dashboard</h2>
+                <p class="mb-0 text-muted">Manage registered students and review hostel assignments.</p>
+            </div>
+            <div>
+                <a href="/" class="btn btn-secondary me-2">Home</a>
+                <a href="/admin-download-all-data" class="btn btn-success me-2">⬇️ Download All Data</a>
+                <a href="/logout" class="btn btn-outline-danger">Logout</a>
+            </div>
+        </div>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endwith %}
+
+        <div id="overview" class="admin-section row mb-4 g-3">
+            <div class="col-12 col-md-3">
+                <div class="card shadow-sm p-3 h-100">
+                    <h6 class="card-title">👨‍🎓 Total Students</h6>
+                    <p class="display-6 mb-0">{{ student_count }}</p>
+                </div>
+            </div>
+            <div class="col-12 col-md-3">
+                <div class="card shadow-sm p-3 h-100">
+                    <h6 class="card-title">🏢 Total Rooms</h6>
+                    <p class="display-6 mb-0">{{ total_rooms }}</p>
+                </div>
+            </div>
+            <div class="col-12 col-md-3">
+                <div class="card shadow-sm p-3 h-100">
+                    <h6 class="card-title">🛏️ Available Rooms</h6>
+                    <p class="display-6 mb-0">{{ available_rooms }}</p>
+                </div>
+            </div>
+            <div class="col-12 col-md-3">
+                <div class="card shadow-sm p-3 h-100">
+                    <h6 class="card-title">❌ Occupied Rooms</h6>
+                    <p class="display-6 mb-0">{{ occupied_rooms }}</p>
+                </div>
+            </div>
+            <div class="col-12 col-md-3">
+                <div class="card shadow-sm p-3 h-100">
+                    <h6 class="card-title">⏳ Pending Requests</h6>
+                    <p class="display-6 mb-0">{{ pending_count }}</p>
+                </div>
+            </div>
+            <div class="col-12 col-md-3">
+                <div class="card shadow-sm p-3 h-100">
+                    <h6 class="card-title">✅ Approved Requests</h6>
+                    <p class="display-6 mb-0">{{ approved_count }}</p>
+                </div>
+            </div>
+            <div class="col-12 col-md-3">
+                <div class="card shadow-sm p-3 h-100">
+                    <h6 class="card-title">❌ Rejected Requests</h6>
+                    <p class="display-6 mb-0">{{ rejected_count }}</p>
+                </div>
+            </div>
+            <div class="col-12 col-md-3">
+                <div class="card shadow-sm p-3 h-100">
+                    <h6 class="card-title">💰 Pending Rent Payments</h6>
+                    <p class="display-6 mb-0">{{ pending_rent_payments }}</p>
+                </div>
+            </div>
+            <div class="col-12 col-md-3">
+                <div class="card shadow-sm p-3 h-100">
+                    <h6 class="card-title">🏷️ Hostel Fee</h6>
+                    <p class="display-6 mb-0">₹{{ '%.2f' % hostel_fee }}</p>
+                </div>
+            </div>
+            <div class="col-12 col-md-3">
+                <div class="card shadow-sm p-3 h-100">
+                    <h6 class="card-title">💵 Total Expected Fee</h6>
+                    <p class="display-6 mb-0">₹{{ '%.2f' % total_expected_fee }}</p>
+                </div>
+            </div>
+            <div class="col-12 col-md-3">
+                <div class="card shadow-sm p-3 h-100">
+                    <h6 class="card-title">🧾 Total Fee Paid</h6>
+                    <p class="display-6 mb-0">₹{{ '%.2f' % total_rent_paid }}</p>
+                </div>
+            </div>
+            <div class="col-12 col-md-3">
+                <div class="card shadow-sm p-3 h-100">
+                    <h6 class="card-title">📉 Total Fee Due</h6>
+                    <p class="display-6 mb-0">₹{{ '%.2f' % total_rent_pending }}</p>
+                </div>
+            </div>
+            <div class="col-12 col-md-3">
+                <div class="card shadow-sm p-3 h-100">
+                    <h6 class="card-title">✅ Fully Paid</h6>
+                    <p class="display-6 mb-0">{{ fully_paid_students }}</p>
+                </div>
+            </div>
+            <div class="col-12 col-md-3">
+                <div class="card shadow-sm p-3 h-100">
+                    <h6 class="card-title">🟡 Partially Paid</h6>
+                    <p class="display-6 mb-0">{{ partially_paid_students }}</p>
+                </div>
+            </div>
+            <div class="col-12 col-md-3">
+                <div class="card shadow-sm p-3 h-100">
+                    <h6 class="card-title">⚠️ Unpaid</h6>
+                    <p class="display-6 mb-0">{{ unpaid_students }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="security" class="admin-section card p-3 mb-4">
+            <h4>Security</h4>
+            <div class="row align-items-center g-4 mt-1">
+                <div class="col-lg-6">
+                    <p class="mb-3 text-muted">Scan QR code with Google Authenticator or Authy.</p>
+                    {% if admin_security and admin_security.qr_data %}
+                        <div class="security-qr">
+                            <img src="{{ admin_security.qr_data }}" alt="Authenticator QR code" class="img-fluid" style="max-width:220px;">
+                        </div>
+                    {% else %}
+                        <div class="border rounded p-3 bg-white text-muted text-center">QR code will be generated when Security is opened after signing in.</div>
+                    {% endif %}
+                </div>
+                <div class="col-lg-6">
+                    <form method="POST" action="/admin-2fa-settings">
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" id="toggle_2fa" name="toggle_2fa" value="on" {% if admin_security and admin_security.enabled %}checked{% endif %}>
+                            <label class="form-check-label fw-semibold" for="toggle_2fa">Enable 2-Factor Authentication</label>
+                        </div>
+                        <button class="btn btn-primary" type="submit">Save Security</button>
+                        <a href="/admin-2fa?show_qr=1" class="btn btn-outline-secondary ms-2">Open QR</a>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div id="payment-verification" class="admin-section card p-3 mb-4">
+            <h4>Payment Verification</h4>
+            <p class="text-muted">Review student UTR details and screenshots before adding payment to the fee record.</p>
+            <div class="table-responsive">
+                <table class="table table-bordered align-middle">
+                    <thead class="table-light"><tr><th>Student</th><th>Payment</th><th>UTR / Details</th><th>Screenshot</th><th>Status / Action</th></tr></thead>
+                    <tbody>
+                    {% for payment in payment_submissions %}
+                    <tr>
+                        <td><strong>{{ payment.name }}</strong><br><small>{{ payment.email }}<br>{{ payment.hostel or '-' }} / {{ payment.block or '-' }} / {{ payment.room or '-' }}</small></td>
+                        <td>Rs. {{ '%.2f'|format(payment.amount) }}<br><small>{{ payment.payment_date }}<br>{{ payment.payment_method }}</small></td>
+                        <td><strong>{{ payment.utr }}</strong><br><small>{{ payment.notes or '-' }}</small></td>
+                        <td>{% if payment.screenshot_url %}<a href="{{ payment.screenshot_url }}" target="_blank" rel="noreferrer">View Screenshot</a>{% else %}<span class="text-muted">Not uploaded</span>{% endif %}</td>
+                        <td><span class="badge {% if payment.status == 'approved' %}bg-success{% elif payment.status == 'rejected' %}bg-danger{% else %}bg-warning text-dark{% endif %}">{{ payment.status|title }}</span>{% if payment.status == 'pending' %}<form method="post" action="/admin-action" class="mt-2"><input type="hidden" name="action" value="verify_payment"><input type="hidden" name="payment_id" value="{{ payment.id }}"><input class="form-control form-control-sm mb-1" name="admin_note" placeholder="Admin note"><div class="d-flex gap-1"><button class="btn btn-sm btn-success" name="status" value="approved" type="submit">Approve</button><button class="btn btn-sm btn-danger" name="status" value="rejected" type="submit">Reject</button></div></form>{% elif payment.admin_note %}<small class="d-block mt-1">{{ payment.admin_note }}</small>{% endif %}</td>
+                    </tr>
+                    {% else %}<tr><td colspan="5" class="text-center text-muted">No student payments submitted.</td></tr>{% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="rooms" class="admin-section card p-3 mb-4">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <h4 class="mb-0">Manage Rooms</h4>
+                <button class="btn btn-success btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#addRoomForm">Add Room</button>
+            </div>
+            <div class="collapse mt-3" id="addRoomForm">
+                <form method="POST" action="/admin-action" class="row g-2">
+                    <input type="hidden" name="action" value="add_room">
+                    <div class="col-md"><select class="form-select form-select-sm" name="hostel" required><option value="RKH">RKH</option></select></div>
+                    <div class="col-md"><select class="form-select form-select-sm" name="block" required><option value="Basement">Basement</option><option value="1st Floor">1st Floor</option><option value="2nd Floor">2nd Floor</option><option value="3rd Floor">3rd Floor</option></select></div>
+                    <div class="col-md"><select class="form-select form-select-sm" name="room" required><option value="B-01">B-01</option><option value="B-02">B-02</option><option value="B-03">B-03</option><option value="B-04">B-04</option><option value="B-05">B-05</option><option value="B-06">B-06</option><option value="B-07">B-07</option>{% for number in range(101, 109) %}<option value="{{ number }}">{{ number }}</option>{% endfor %}{% for number in range(201, 209) %}<option value="{{ number }}">{{ number }}</option>{% endfor %}{% for number in range(301, 309) %}<option value="{{ number }}">{{ number }}</option>{% endfor %}</select></div>
+                    <div class="col-md-2"><input class="form-control form-control-sm" type="number" min="1" name="capacity" value="1" required></div>
+                    <div class="col-md-2"><select class="form-select form-select-sm" name="status"><option value="available">Available</option><option value="maintenance">Maintenance</option><option value="unavailable">Unavailable</option></select></div>
+                    <div class="col-md-3"><input class="form-control form-control-sm" name="maintenance_notes" placeholder="Maintenance notes"></div>
+                    <div class="col-md-auto"><button class="btn btn-success btn-sm" type="submit">Create Room</button></div>
+                </form>
+            </div>
+            <div class="table-responsive mt-3">
+                <table class="table table-bordered align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Hostel</th>
+                            <th>Hostel Floor</th>
+                            <th>Room</th>
+                            <th>Capacity</th>
+                            <th>Status</th>
+                            <th>Maintenance Notes</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for room in rooms %}
+                        <tr>
+                            <td><form id="room-form-{{ room.id }}" method="POST" action="/admin-action"></form><input form="room-form-{{ room.id }}" type="hidden" name="action" value="update_room"><input form="room-form-{{ room.id }}" type="hidden" name="room_id" value="{{ room.id }}"><select class="form-select form-select-sm" form="room-form-{{ room.id }}" name="hostel" required><option value="RKH" {% if room.hostel == 'RKH' %}selected{% endif %}>RKH</option></select></td>
+                            <td><select class="form-select form-select-sm" form="room-form-{{ room.id }}" name="block" required><option value="Basement" {% if room.block == 'Basement' %}selected{% endif %}>Basement</option><option value="1st Floor" {% if room.block == '1st Floor' %}selected{% endif %}>1st Floor</option><option value="2nd Floor" {% if room.block == '2nd Floor' %}selected{% endif %}>2nd Floor</option><option value="3rd Floor" {% if room.block == '3rd Floor' %}selected{% endif %}>3rd Floor</option></select></td>
+                            <td><select class="form-select form-select-sm" form="room-form-{{ room.id }}" name="room" required>{% for room_number in ['B-01', 'B-02', 'B-03', 'B-04', 'B-05', 'B-06', 'B-07'] %}<option value="{{ room_number }}" {% if room.room == room_number %}selected{% endif %}>{{ room_number }}</option>{% endfor %}{% for number in range(101, 109) %}<option value="{{ number }}" {% if room.room|string == number|string %}selected{% endif %}>{{ number }}</option>{% endfor %}{% for number in range(201, 209) %}<option value="{{ number }}" {% if room.room|string == number|string %}selected{% endif %}>{{ number }}</option>{% endfor %}{% for number in range(301, 309) %}<option value="{{ number }}" {% if room.room|string == number|string %}selected{% endif %}>{{ number }}</option>{% endfor %}</select></td>
+                            <td><input class="form-control form-control-sm" form="room-form-{{ room.id }}" type="number" min="1" name="capacity" value="{{ room.capacity or 1 }}" required></td>
+                                <td>
+                                    <select class="form-select form-select-sm" form="room-form-{{ room.id }}" name="status">
+                                        <option value="available" {% if room.status == 'available' %}selected{% endif %}>Available</option>
+                                        <option value="maintenance" {% if room.status == 'maintenance' %}selected{% endif %}>Maintenance</option>
+                                        <option value="unavailable" {% if room.status == 'unavailable' %}selected{% endif %}>Unavailable</option>
+                                    </select>
+                                </td>
+                                <td><input class="form-control form-control-sm" form="room-form-{{ room.id }}" name="maintenance_notes" value="{{ room.maintenance_notes or '' }}"></td>
+                                <td class="text-nowrap"><button class="btn btn-sm btn-primary" form="room-form-{{ room.id }}" type="submit">Save Edit</button><button class="btn btn-sm btn-outline-danger ms-1" form="delete-room-form-{{ room.id }}" type="submit">Delete</button><form id="delete-room-form-{{ room.id }}" method="POST" action="/admin-action"><input type="hidden" name="action" value="delete_room"><input type="hidden" name="room_id" value="{{ room.id }}"></form></td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="7" class="text-center text-muted">No rooms have been added yet.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="occupancy" class="admin-section card p-3 mb-4">
+            <h4>Room Occupancy</h4>
+            <div class="table-responsive mt-3">
+                <table class="table table-bordered table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Hostel</th>
+                            <th>Hostel Floor</th>
+                            <th>Room</th>
+                            <th>Occupants</th>
+                            <th>Students</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for room in occupancy_by_room %}
+                        {% set room_key = room.hostel ~ '|' ~ room.block ~ '|' ~ room.room %}
+                        <tr>
+                            <td>{{ room.hostel or '-' }}</td>
+                            <td>{{ room.block or '-' }}</td>
+                            <td>{{ room.room or '-' }}</td>
+                            <td>{{ room.occupants }}</td>
+                            <td>
+                                {% set students_in_room = room_student_map.get(room_key, []) %}
+                                {% if students_in_room %}
+                                    <ul class="mb-0 ps-3">
+                                        {% for student in students_in_room %}
+                                        <li>
+                                            <strong>{{ student.name }}</strong> - {{ student.email }}
+                                            {% if student.rent_paid == 'no' %}
+                                                <span class="badge bg-warning text-dark ms-1">Rent due</span>
+                                            {% endif %}
+                                        </li>
+                                        {% endfor %}
+                                    </ul>
+                                {% else %}
+                                    <span class="text-muted">No student details</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="5" class="text-center">No room occupancy data available.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="complaints" class="admin-section card p-3 mb-4">
+            <h4>Student Complaints</h4>
+            <div class="table-responsive mt-3">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Student</th>
+                            <th>Category</th>
+                            <th>Subject</th>
+                            <th>Description</th>
+                            <th>Status</th>
+                            <th>Submitted</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for complaint in complaints %}
+                        <tr>
+                            <td>{{ complaint.name }}<br><small class="text-muted">{{ complaint.email }}</small></td>
+                            <td>{{ complaint.category }}</td>
+                            <td>{{ complaint.subject }}</td>
+                            <td>{{ complaint.description }}</td>
+                            <td>{{ complaint.status }}</td>
+                            <td>{{ complaint.created_at }}</td>
+                            <td>
+                                <form method="POST" action="/admin-action" class="d-flex gap-2">
+                                    <input type="hidden" name="student_id" value="{{ complaint.student_id }}">
+                                    <input type="hidden" name="action" value="update_complaint">
+                                    <input type="hidden" name="complaint_id" value="{{ complaint.id }}">
+                                    <select class="form-select form-select-sm" name="status">
+                                        <option value="pending" {% if complaint.status == 'pending' %}selected{% endif %}>Pending</option>
+                                        <option value="in_progress" {% if complaint.status == 'in_progress' %}selected{% endif %}>In Progress</option>
+                                        <option value="resolved" {% if complaint.status == 'resolved' %}selected{% endif %}>Resolved</option>
+                                    </select>
+                                    <button class="btn btn-sm btn-primary">Save</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="7" class="text-center">No complaints yet.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="laundry" class="admin-section card p-3 mb-4">
+            <h4>Laundry Requests</h4>
+            <div class="table-responsive mt-3">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Student</th>
+                            <th>Token</th>
+                            <th>In Code</th>
+                            <th>Out Code</th>
+                            <th>Bag In</th>
+                            <th>Bag Out</th>
+                            <th>Date</th>
+                            <th>Time</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for request in laundry_requests %}
+                        <tr>
+                            <td>{{ request.name }}<br><small class="text-muted">{{ request.email }}</small></td>
+                            <td>{{ request.token_no }}</td>
+                            <td>{{ request.verification_code or '-' }}</td>
+                            <td>{{ request.out_code or 'Not generated' }}</td>
+                            <td>{{ request.bag_in_at or '-' }}</td>
+                            <td>{{ request.bag_out_at or '-' }}</td>
+                            <td>{{ request.token_date }}</td>
+                            <td>{{ request.token_time }}</td>
+                            <td>{{ request.status }}</td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="6" class="text-center">No laundry requests yet.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="leave-requests" class="admin-section card p-3">
+            <h4>Holiday / Leave Requests</h4>
+            <div class="table-responsive mt-3">
+                <table class="table table-bordered align-middle">
+                    <thead class="table-light"><tr><th>Student</th><th>Type</th><th>Dates</th><th>Reason</th><th>Destination</th><th>Status / Action</th></tr></thead>
+                    <tbody>
+                        {% for leave in leave_requests %}
+                        <tr>
+                            <td>{{ leave.name }}<br><small>{{ leave.email }}{% if leave.room %} · Room {{ leave.room }}{% endif %}</small></td>
+                            <td>{{ leave.leave_type|replace('_', ' ')|title }}</td>
+                            <td>{{ leave.start_date }}<br>to {{ leave.end_date }}</td>
+                            <td>{{ leave.reason }}<br><small>{{ leave.emergency_contact }}</small></td>
+                            <td>{{ leave.destination or '-' }}</td>
+                            <td><span class="badge {% if leave.status == 'approved' %}bg-success{% elif leave.status == 'rejected' %}bg-danger{% else %}bg-secondary{% endif %}">{{ leave.status|title }}</span><form method="post" action="/admin-action" class="mt-2"><input type="hidden" name="action" value="update_leave"><input type="hidden" name="leave_id" value="{{ leave.id }}"><input class="form-control form-control-sm mb-1" name="admin_note" placeholder="Admin note" value="{{ leave.admin_note or '' }}"><div class="d-flex gap-1"><button class="btn btn-sm btn-success" name="status" value="approved" type="submit">Approve</button><button class="btn btn-sm btn-danger" name="status" value="rejected" type="submit">Reject</button></div></form></td>
+                        </tr>
+                        {% else %}<tr><td colspan="6" class="text-center text-muted">No leave requests yet.</td></tr>{% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="notifications" class="admin-section card p-3">
+            <h4>Create Notification</h4>
+            <p class="text-muted">Send a message to every student or one selected student.</p>
+            <form action="/admin-notification" method="post" enctype="multipart/form-data" class="row g-3">
+                <div class="col-md-6"><label class="form-label">Title</label><input class="form-control" name="title" required></div>
+                <div class="col-md-6"><label class="form-label">Audience</label><select class="form-select" name="audience" id="notificationAudience"><option value="all">All Students</option><option value="student">Particular Student</option></select></div>
+                <div class="col-md-6 d-none" id="notificationStudentField"><label class="form-label">Approved Student</label><select class="form-select" name="student_id"><option value="">Select approved student</option>{% for student in notification_students %}<option value="{{ student.id }}">{{ student.name }} - Room {{ student.room or 'Not assigned' }} - {{ student.email }} (Approved)</option>{% endfor %}</select><div class="form-text">Only approved students are available for individual notifications.</div></div>
+                <div class="col-12"><label class="form-label">Message</label><textarea class="form-control" name="message" rows="4" required></textarea></div>
+                <div class="col-md-6"><label class="form-label">Image (optional)</label><input class="form-control" type="file" name="image" accept="image/*"></div>
+                <div class="col-12"><button class="btn btn-primary" type="submit">Send Notification</button></div>
+            </form>
+        </div>
+
+        <div id="student-details" class="admin-section card p-3">
+            <h4>Full Student Details</h4>
+            <p class="text-muted">Student photo, personal, guardian, address, hostel, and document details.</p>
+            <a href="/admin-download-students" class="btn btn-success btn-sm mb-3">⬇️ Download Student Excel</a>
+            <div class="row g-3">
+                {% for student in students %}
+                <div class="col-12 col-xl-6">
+                    <article class="card border shadow-sm h-100">
+                        <div class="card-body">
+                            <div class="d-flex gap-3 align-items-start mb-3">
+                                {% if student.photo_url %}<img src="{{ student.photo_url }}" alt="Student profile photo" class="rounded-circle" style="width:84px;height:84px;object-fit:cover;">{% else %}<div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center" style="width:84px;height:84px;font-size:2rem;">{{ (student.name or 'S')[0]|upper }}</div>{% endif %}
+                                <div><h5 class="mb-1">{{ student.name or '-' }}</h5><div class="text-muted">ID: {{ student.id }} | {{ student.status|title }}</div><div>{{ student.email or '-' }} | {{ student.phone or '-' }}</div></div>
+                            </div>
+                            <div class="border rounded p-3 mb-3 bg-light">
+                                <div class="d-flex align-items-center gap-3">
+                                    {% if student.photo_url %}<img src="{{ student.photo_url }}" alt="Student ID photo" class="rounded" style="width:64px;height:64px;object-fit:cover;">{% endif %}
+                                    <div><strong>Digital Student ID Card</strong><br><small>Hostel ID: HST{{ '%03d'|format(student.id) }} | Student ID: {{ student.id }}<br>Hostel: {{ student.hostel or '-' }} | Room: {{ student.room or '-' }}<br>Blood Group: {{ student.blood_group or '-' }}</small></div>
+                                </div>
+                                {% if student.college_id_url %}<a href="{{ student.college_id_url }}" target="_blank" rel="noreferrer" class="btn btn-sm btn-outline-primary mt-2">View College ID Proof</a>{% endif %}
+                            </div>
+                            <div class="row g-2 small">
+                                <div class="col-md-6"><strong>College:</strong> {{ student.college or '-' }}</div><div class="col-md-6"><strong>Course:</strong> {{ student.course or '-' }}</div>
+                                <div class="col-md-6"><strong>Department:</strong> {{ student.department or '-' }}</div><div class="col-md-6"><strong>Year/Semester:</strong> {{ student.year_semester or '-' }}</div>
+                                <div class="col-md-6"><strong>Hostel / Room:</strong> {{ student.hostel or '-' }} / {{ student.room or '-' }}</div><div class="col-md-6"><strong>Floor / Bed:</strong> {{ student.block or '-' }} / {{ student.bed_number or '-' }}</div>
+                                <div class="col-md-6"><strong>Father:</strong> {{ student.father_name or '-' }}</div><div class="col-md-6"><strong>Mother:</strong> {{ student.mother_name or '-' }}</div>
+                                <div class="col-md-6"><strong>Guardian:</strong> {{ student.guardian_name or '-' }}</div><div class="col-md-6"><strong>Guardian Phones:</strong> {{ student.guardian_phone or '-' }}, {{ student.guardian_phone_2 or '-' }}</div>
+                                <div class="col-12"><strong>Home Address:</strong> {{ student.home_address or '-' }}, {{ student.address_city or '-' }}, {{ student.address_district or '-' }}, {{ student.address_state or '-' }} - {{ student.address_pincode or '-' }}, {{ student.address_country or '-' }}</div>
+                                <div class="col-md-6"><strong>Emergency:</strong> {{ student.emergency_contact or '-' }}</div><div class="col-md-6"><strong>Blood Group:</strong> {{ student.blood_group or '-' }}</div>
+                                <div class="col-12">{% if student.college_id_url %}<a href="{{ student.college_id_url }}" target="_blank" rel="noreferrer">View College ID</a>{% else %}<span class="text-muted">College ID not uploaded</span>{% endif %}</div>
+                            </div>
+                        </div>
+                    </article>
+                </div>
+                {% else %}<div class="col-12 text-muted">No students found.</div>{% endfor %}
+            </div>
+        </div>
+
+        <div id="all-students" class="admin-section card p-3">
+            <h4>All Students</h4>
+            <p class="text-muted mb-3">Complete list of pending, approved, rejected, and withdrawn students.</p>
+            <a href="/admin-download-students" class="btn btn-success btn-sm mb-3">⬇️ Download Student Excel</a>
+            <table class="table table-striped mt-3">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Phone</th>
+                        <th>Hostel</th>
+                        <th>Hostel Floor</th>
+                        <th>Room</th>
+                        <th>Status</th>
+                        <th>Total Fee</th>
+                        <th>Paid</th>
+                        <th>Due</th>
+                        <th>Fee Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for student in students %}
+                    <tr>
+                        <td>{{ student.id }}</td>
+                        <td>{{ student.name }}</td>
+                        <td>{{ student.email }}</td>
+                        <td>{{ student.phone }}</td>
+                        <td>{{ student.hostel }}</td>
+                        <td>{{ student.block }}</td>
+                        <td>{{ student.room }}</td>
+                        <td class="text-capitalize">{{ student.status or 'pending' }}</td>
+                        <td>
+                            {{ '%.2f' % (student.rent_amount or 0) }}
+                        </td>
+                        <td>
+                            {{ '%.2f' % (student.rent_paid_amount or 0) }}
+                        </td>
+                        <td>
+                            {% set due = (student.rent_amount or 0) - (student.rent_paid_amount or 0) %}
+                            {{ '%.2f' % due }}
+                        </td>
+                        <td>
+                            {% if student.rent_paid == 'yes' %}
+                                <span class="badge bg-success">Paid</span>
+                            {% elif student.rent_paid_amount and student.rent_paid_amount > 0 %}
+                                <span class="badge bg-info text-dark">Partially Paid</span>
+                            {% else %}
+                                <span class="badge bg-warning text-dark">Unpaid</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <form method="POST" action="/admin-action" class="d-inline">
+                                <input type="hidden" name="student_id" value="{{ student.id }}">
+                                <input type="hidden" name="action" value="set_student_active">
+                                <input type="hidden" name="is_active" value="{% if student.is_active %}0{% else %}1{% endif %}">
+                                <button type="submit" class="btn btn-sm {% if student.is_active %}btn-outline-warning{% else %}btn-outline-success{% endif %}">{% if student.is_active %}Make Inactive{% else %}Make Active{% endif %}</button>
+                            </form>
+                            <form method="POST" action="/admin-action" class="d-inline ms-1" onsubmit="return confirm('Delete this student and related records permanently?');">
+                                <input type="hidden" name="student_id" value="{{ student.id }}">
+                                <input type="hidden" name="action" value="delete_student">
+                                <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                            </form>
+                            <div class="mt-2">
+                            {% if student.status == 'pending' or student.status is none %}
+                                <form method="POST" action="/admin-action" class="d-inline">
+                                    <input type="hidden" name="student_id" value="{{ student.id }}">
+                                    <input type="hidden" name="action" value="approve">
+                                    <button type="submit" class="btn btn-sm btn-success">Approve</button>
+                                </form>
+                                <form method="POST" action="/admin-action" class="d-inline ms-1">
+                                    <input type="hidden" name="student_id" value="{{ student.id }}">
+                                    <input type="hidden" name="action" value="reject">
+                                    <button type="submit" class="btn btn-sm btn-danger">Reject</button>
+                                </form>
+                            {% elif student.status == 'approved' %}
+                                {% if student.rent_paid == 'no' %}
+                                    <form method="POST" action="/admin-action" class="d-inline-flex align-items-center gap-1">
+                                        <input type="hidden" name="student_id" value="{{ student.id }}">
+                                        <input type="hidden" name="action" value="record_payment">
+                                        <input type="number" step="0.01" min="0" name="payment_amount" placeholder="Amount" class="form-control form-control-sm" style="width: 110px;" required>
+                                        <button type="submit" class="btn btn-sm btn-primary">Record</button>
+                                    </form>
+                                    <form method="POST" action="/admin-action" class="d-inline ms-1">
+                                        <input type="hidden" name="student_id" value="{{ student.id }}">
+                                        <input type="hidden" name="action" value="mark_paid">
+                                        <button type="submit" class="btn btn-sm btn-warning">Full Paid</button>
+                                    </form>
+                                {% else %}
+                                    <span class="badge bg-success">Paid</span>
+                                {% endif %}
+                            {% else %}
+                                <span class="badge bg-secondary">{{ student.status|capitalize }}</span>
+                            {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="13" class="text-center">No students registered yet.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot>
+                    <tr class="table-secondary">
+                        <th colspan="8" class="text-end">Totals:</th>
+                        <th>₹{{ '%.2f' % total_expected_fee }}</th>
+                        <th>₹{{ '%.2f' % total_rent_paid }}</th>
+                        <th>₹{{ '%.2f' % total_rent_pending }}</th>
+                        <th colspan="2"></th>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+    <div id="attendance-records" class="admin-section card p-3 mb-4">
+        <h4>Attendance Records</h4>
+        <p class="text-muted">Main Admin can mark and correct student attendance.</p>
+        <form method="get" action="/admin-dashboard" class="d-flex align-items-end gap-2 mb-3">
+            <div><label class="form-label mb-1" for="admin-attendance-date">Attendance date</label><input class="form-control" id="admin-attendance-date" type="date" name="attendance_date" value="{{ attendance_date }}"></div>
+            <button class="btn btn-primary" type="submit">View Students</button>
+        </form>
+        <div class="table-responsive mb-4"><table class="table table-bordered align-middle"><thead><tr><th>Student</th><th>Room</th><th>Attendance</th><th>Action</th></tr></thead><tbody>
+        {% for student in admin_attendance_students %}<tr><td>{{ student.name }}<br><small>{{ student.email }}</small></td><td>{{ student.hostel or '-' }} / {{ student.room or '-' }}</td><td>{{ student.attendance_status|title if student.attendance_status else 'Not marked' }}</td><td><form method="post" action="/admin-attendance-save" class="d-flex gap-2"><input type="hidden" name="student_id" value="{{ student.id }}"><input type="hidden" name="attendance_date" value="{{ attendance_date }}"><select class="form-select form-select-sm" name="status"><option value="present" {% if student.attendance_status == 'present' %}selected{% endif %}>Present</option><option value="absent" {% if student.attendance_status == 'absent' %}selected{% endif %}>Absent</option><option value="late" {% if student.attendance_status == 'late' %}selected{% endif %}>Late</option></select><button class="btn btn-sm btn-success" type="submit">Save</button></form></td></tr>{% else %}<tr><td colspan="4" class="text-center text-muted">No approved students found.</td></tr>{% endfor %}
+        </tbody></table></div>
+        <h5>Saved Attendance Records for {{ attendance_date }}</h5>
+        <div class="table-responsive"><table class="table table-bordered align-middle"><thead><tr><th>Date</th><th>Student</th><th>Status</th><th>Correction</th></tr></thead><tbody>
+        {% for record in attendance_records %}<tr><td>{{ record.attendance_date }}</td><td>{{ record.name }} ({{ record.student_id }})</td><td>{{ record.status|title }}</td><td><form method="post" action="/admin-attendance-action" class="d-flex gap-2"><input type="hidden" name="attendance_id" value="{{ record.id }}"><select class="form-select form-select-sm" name="status"><option value="present" {% if record.status == 'present' %}selected{% endif %}>Present</option><option value="absent" {% if record.status == 'absent' %}selected{% endif %}>Absent</option><option value="late" {% if record.status == 'late' %}selected{% endif %}>Late</option></select><button class="btn btn-sm btn-primary" type="submit">Update</button></form></td></tr>{% else %}<tr><td colspan="4" class="text-center text-muted">No attendance records yet.</td></tr>{% endfor %}
+        </tbody></table></div>
+    </div>
+    <div id="admin-access-logs" class="admin-section card p-3 mb-4">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2"><div><h4 class="mb-1">Admin Device Access</h4><p class="text-muted mb-0">Recent devices used to open the admin panel.</p></div><a href="/logout" class="btn btn-outline-danger">Logout</a></div>
+        <div class="table-responsive mt-3"><table class="table table-bordered align-middle"><thead><tr><th>Device Name</th><th>Admin</th><th>IP Address</th><th>Accessed At</th><th>Action</th></tr></thead><tbody>
+        {% for log in access_logs %}<tr><td><strong>{{ log.device_name }}</strong><br><small class="text-muted">{{ log.user_agent or '-' }}</small></td><td>{{ log.email or '-' }}</td><td>{{ log.ip_address or '-' }}</td><td>{{ log.accessed_at or '-' }}</td><td>{% if log.session_active %}<form method="post" action="/admin-action" onsubmit="return confirm('Enter your authenticator code to log out this device?');"><input type="hidden" name="action" value="logout_device"><input type="hidden" name="access_log_id" value="{{ log.id }}"><input class="form-control form-control-sm mb-1" name="authenticator_code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" placeholder="6-digit code" required><button class="btn btn-sm btn-outline-danger" type="submit">Log out device</button></form>{% else %}<span class="badge bg-secondary">Logged out</span>{% endif %}</td></tr>{% else %}<tr><td colspan="5" class="text-center text-muted">No device records yet.</td></tr>{% endfor %}
+        </tbody></table></div>
+    </div>
+    </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const notificationAudience = document.getElementById('notificationAudience');
+        const notificationStudentField = document.getElementById('notificationStudentField');
+        if (notificationAudience) notificationAudience.addEventListener('change', () => notificationStudentField.classList.toggle('d-none', notificationAudience.value !== 'student'));
+
+        (() => {
+            const sidebar = document.querySelector('.admin-sidebar');
+            const sidebarToggle = document.querySelector('.admin-sidebar-toggle');
+            sidebarToggle.addEventListener('click', () => {
+                const collapsed = document.body.classList.toggle('sidebar-collapsed');
+                sidebar.classList.toggle('collapsed', collapsed);
+                sidebarToggle.setAttribute('aria-expanded', String(!collapsed));
+            });
+
+            const sections = [...document.querySelectorAll('.admin-section')];
+            const menuLinks = [...document.querySelectorAll('.admin-nav a[href^="#"]')];
+
+            const showSection = (id) => {
+                sections.forEach((section) => {
+                    const isVisible = section.id === id;
+                    section.classList.toggle('d-none', !isVisible);
+                    section.classList.toggle('section-visible', isVisible);
+                });
+                menuLinks.forEach((link) => link.classList.toggle('active', link.getAttribute('href') === `#${id}`));
+                const activeSection = document.getElementById(id);
+                if (activeSection) activeSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            };
+
+            menuLinks.forEach((link) => {
+                link.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    showSection(link.getAttribute('href').slice(1));
+                });
+            });
+
+            showSection('overview');
+        })();
+    </script>
+</body>
+</html>

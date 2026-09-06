@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Laundry Admin Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+<header class="navbar navbar-dark bg-dark"><div class="container-fluid"><span class="navbar-brand">Laundry Admin Dashboard</span><a class="btn btn-outline-light btn-sm" href="/logout">Logout</a></div></header>
+<main class="container-fluid py-4"><section class="card shadow-sm"><div class="card-body">
+    <h2 class="h4">Laundry Students and Token Verification</h2><p class="text-muted">Student ko laundry bag ke saath displayed verification code lana hoga.</p>
+    {% with messages = get_flashed_messages(with_categories=true) %}{% for category, message in messages %}<div class="alert alert-{{ category }}">{{ message }}</div>{% endfor %}{% endwith %}
+    <div class="table-responsive"><table class="table table-striped table-bordered align-middle">
+        <thead class="table-light"><tr><th>Student</th><th>College ID</th><th>Token</th><th>Bag In Time</th><th>Bag Out Time</th><th>Status</th><th>Action</th></tr></thead>
+        <tbody>{% for student in laundry_students %}<tr>
+            <td>{{ student.name or '-' }}<br><small>ID: {{ student.student_id }} | Room: {{ student.room or '-' }}</small></td>
+            <td>{% if student.college_id_url %}<a href="{{ student.college_id_url }}" target="_blank" rel="noreferrer">View College ID</a>{% else %}Not uploaded{% endif %}</td>
+            <td>{{ student.token_no or 'No token' }}<br><small>{{ student.valid_until or '-' }}</small></td>
+            <td>{{ student.bag_in_at or '-' }}</td>
+            <td>{{ student.bag_out_at or '-' }}</td>
+            <td>{{ student.status|title if student.status else 'No token' }}</td>
+            <td>{% if student.token_id and student.status not in ['picked_up', 'out_verified', 'handed_over'] %}<form method="post" action="/laundry-verify" class="d-flex gap-2">
+                <input type="hidden" name="token_id" value="{{ student.token_id }}"><input class="form-control form-control-sm" name="verification_code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" placeholder="6-digit code" required>
+                <button class="btn btn-sm btn-success" type="submit">Verify</button>
+            </form>{% elif student.status == 'picked_up' %}<form method="post" action="/laundry-out-verify" class="d-flex gap-2"><input type="hidden" name="token_id" value="{{ student.token_id }}"><input class="form-control form-control-sm" name="out_code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" placeholder="Out code" required><button class="btn btn-sm btn-warning" type="submit">Verify Out Code</button></form>{% elif student.status == 'out_verified' %}<form method="post" action="/laundry-pickup"><input type="hidden" name="token_id" value="{{ student.token_id }}"><button class="btn btn-sm btn-primary" type="submit">Give Bag</button></form>{% else %}-{% endif %}</td>
+        </tr>{% else %}<tr><td colspan="7" class="text-center text-muted">No approved students found.</td></tr>{% endfor %}</tbody>
+    </table></div>
+</div></section></main>
+</body></html>
